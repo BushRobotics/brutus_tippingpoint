@@ -61,10 +61,19 @@ void stop_all_motors() {
 /**
 	this function hangs until the motor has spun to the correct position
 	*/
-void spin_to(uint8_t port, double position, int32_t velocity) {
+int spin_to(uint8_t port, double position, int32_t velocity) {
+	int time_taken = 0;
 	motor_move_absolute(port, position, velocity);
 	while (!(motor_get_position(port) < position + 5 && motor_get_position(port) > position - 5)) {
 		delay(2); // delay until within 5 units of position
+		time_taken += 2;
+	}
+	return time_taken;
+}
+
+void spin_all_wheels(int speed) {
+	for (int i = 0; i < 4; i++) {
+		motor_move(wheels[i], speed);
 	}
 }
 
@@ -105,6 +114,51 @@ void autonomous() {
 	#ifndef DO_AUTON
 		return;
 	#endif
+	
+	enum State {seeking, lifting, returning, dropping}; // thank god for c
+	
+	enum State state = seeking;
+	
+	int total_time = 0;
+	int return_time = 0;
+	
+	while (total_time < 15000) {
+		switch(state) {
+			case seeking:
+				if (total_time >= AUTON_SEEK_TIME) {
+					state = lifting;
+				}
+				else {
+					spin_all_wheels(AUTON_DRIVE_SPEED);
+				}
+				break;
+			
+			case lifting:
+				stop_all_motors();
+				total_time += spin_to(PRONG_PORT, 50 * PRONG_GEAR_RATIO, 25);
+				state = returning;
+				break;
+				
+			case returning:
+				if (return_time >= AUTON_SEEK_TIME) {
+					state = dropping;
+					stop_all_motors;
+				}
+				else {
+					spin_all_wheels(AUTON_DRIVE_SPEED * -1);
+					return_time += 2;
+				}
+				break;
+				
+			case dropping:
+				spin_to(PRONG_PORT, 85 * PRONG_GEAR_RATIO, 25);
+				goto auton_done;
+		}
+		
+		total_time += 2;
+		delay(2);
+	}
+	auton_done: ;
 }
 
 /**
