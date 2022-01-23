@@ -122,6 +122,8 @@ void autonomous() {
 	int total_time = 0;
 	int return_time = 0;
 	
+	motor_move_absolute(PRONG_PORT, 88 * PRONG_GEAR_RATIO, 22); // start prong movement
+	
 	while (total_time < 15000) {
 		switch(state) {
 			case seeking:
@@ -159,6 +161,7 @@ void autonomous() {
 		delay(2);
 	}
 	auton_done: ;
+	stop_all_motors();
 }
 
 /**
