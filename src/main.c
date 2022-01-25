@@ -49,6 +49,7 @@ void initialize() {
 			motor_set_reversed(wheels[i], true);
 		}
 	}
+	controller_print(E_CONTROLLER_MASTER, 0, 0, "Good morning!");
 }
 
 void stop_all_motors() {
@@ -68,6 +69,7 @@ int spin_to(uint8_t port, double position, int32_t velocity) {
 		delay(2); // delay until within 5 units of position
 		time_taken += 2;
 	}
+	motor_move(port, 0);
 	return time_taken;
 }
 
@@ -123,6 +125,9 @@ void autonomous() {
 	int return_time = 0;
 	
 	motor_move_absolute(PRONG_PORT, 88 * PRONG_GEAR_RATIO, 22); // start prong movement
+	
+	controller_clear_line(E_CONTROLLER_MASTER, 0);
+	controller_print(E_CONTROLLER_MASTER, 0, 0, "We are autonomizing!!!!");
 	
 	while (total_time < 15000) {
 		switch(state) {
@@ -183,6 +188,10 @@ void opcontrol() {
 	
 	
 	int wheel_power[4] = {0, 0, 0, 0};
+	int frames = 0;
+	
+	controller_clear_line(E_CONTROLLER_MASTER, 0);
+	controller_print(E_CONTROLLER_MASTER, 0, 0, "vroom vroom!");
 	
 	while (true) {
 		left_stick.x = controller_get_analog(E_CONTROLLER_MASTER, E_CONTROLLER_ANALOG_LEFT_X);
@@ -218,12 +227,22 @@ void opcontrol() {
 				motor_tare_position(PRONG_PORT);
 			}
 		}
+		else {
+			motor_move(PRONG_PORT, 0);
+		}
 		
 		// actually spin motors
 		for (int i = 0; i < 4; i++) {
 			motor_move(wheels[i], wheel_power[i]);
 		}
 		
+		// prints and stuff
+		if (frames == 250) {
+			frames = 0;
+			printf("prong position: %d\r\n", motor_get_position(PRONG_PORT));
+		}
+		
 		delay(2);
+		frames++;
 	}
 }
