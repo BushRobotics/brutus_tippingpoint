@@ -239,7 +239,8 @@ void opcontrol() {
 		// prints and stuff
 		if (frames == 250) {
 			frames = 0;
-			printf("prong position: %d\r\n", motor_get_position(PRONG_PORT));
+			printf("prong position: %9.1f\r\n", motor_get_position(PRONG_PORT));
+			printf("in %d units\r\n", motor_get_encoder_units(PRONG_PORT)); // should be 0
 		}
 		
 		delay(2);
