@@ -29,12 +29,12 @@ int wheels[4] = {1, 20, 2, 11};
  * to keep execution time for this mode under a few seconds.
  */
 void initialize() {
-	// set prong units to degrees and brake mode to hold
-	motor_set_encoder_units(PRONG_PORT, E_MOTOR_ENCODER_DEGREES);
-	motor_set_brake_mode(PRONG_PORT, E_MOTOR_BRAKE_HOLD);
-	
 	// 36:1 gear ratio (red gearbox)
 	motor_set_gearing(PRONG_PORT, E_MOTOR_GEARSET_36);
+	
+	// set prong units to degrees and brake mode to hold
+	motor_set_brake_mode(PRONG_PORT, E_MOTOR_BRAKE_HOLD);
+	motor_set_encoder_units(PRONG_PORT, E_MOTOR_ENCODER_DEGREES);
 	
 	motor_tare_position(PRONG_PORT);
 	
@@ -62,10 +62,11 @@ void stop_all_motors() {
 /**
 	this function hangs until the motor has spun to the correct position
 	*/
-int spin_to(uint8_t port, double position, int32_t velocity) {
+int spin_to(uint8_t port, double position, int32_t velocity, float gear_ratio) {
 	int time_taken = 0;
+	position = position * gear_ratio;
 	motor_move_absolute(port, position, velocity);
-	while (!(motor_get_position(port) < position + 5 && motor_get_position(port) > position - 5)) {
+	while (!(motor_get_position(port) / gear_ratio < position + 5 && motor_get_position(port) / gear_ratio > position - 5)) {
 		delay(2); // delay until within 5 units of position
 		time_taken += 2;
 	}
@@ -142,7 +143,7 @@ void autonomous() {
 			
 			case lifting:
 				stop_all_motors();
-				total_time += spin_to(PRONG_PORT, 50 * PRONG_GEAR_RATIO, 25);
+				total_time += spin_to(PRONG_PORT, 50, 25, PRONG_GEAR_RATIO);
 				state = returning;
 				break;
 				
@@ -158,7 +159,7 @@ void autonomous() {
 				break;
 				
 			case dropping:
-				spin_to(PRONG_PORT, 85 * PRONG_GEAR_RATIO, 25);
+				spin_to(PRONG_PORT, 85, 25, PRONG_GEAR_RATIO);
 				goto auton_done;
 		}
 		
@@ -215,13 +216,13 @@ void opcontrol() {
 		wheel_power[3] -= right_stick.x * RIGHT_SENSITIVITY;
 		
 		// da prongs
-		if (is_pressing(E_CONTROLLER_DIGITAL_R1) && (motor_get_position(PRONG_PORT) > 0 || is_pressing(E_CONTROLLER_DIGITAL_A))) {
+		if (is_pressing(E_CONTROLLER_DIGITAL_R1) && (motor_get_position(PRONG_PORT) / PRONG_GEAR_RATIO> 0 || is_pressing(E_CONTROLLER_DIGITAL_A))) {
 			motor_move(PRONG_PORT, PRONG_SPEED);
 			if (is_pressing(E_CONTROLLER_DIGITAL_A)) {
 				motor_tare_position(PRONG_PORT);
 			}
 		}
-		else if (is_pressing(E_CONTROLLER_DIGITAL_R2) && (motor_get_position(PRONG_PORT) < 88 || is_pressing(E_CONTROLLER_DIGITAL_A))) {
+		else if (is_pressing(E_CONTROLLER_DIGITAL_R2) && (motor_get_position(PRONG_PORT) / PRONG_GEAR_RATIO < 88 || is_pressing(E_CONTROLLER_DIGITAL_A))) {
 			motor_move(PRONG_PORT, PRONG_SPEED * -1);
 			if (is_pressing(E_CONTROLLER_DIGITAL_A)) {
 				motor_tare_position(PRONG_PORT);
@@ -239,7 +240,7 @@ void opcontrol() {
 		// prints and stuff
 		if (frames == 250) {
 			frames = 0;
-			printf("prong position: %9.1f\r\n", motor_get_position(PRONG_PORT));
+			printf("prong position: %9.1f\r\n", motor_get_position(PRONG_PORT) / PRONG_GEAR_RATIO);
 			printf("in %d units\r\n", motor_get_encoder_units(PRONG_PORT)); // should be 0
 		}
 		
