@@ -3,7 +3,7 @@
 #define DO_AUTON // comment this out for non-auton mode
 
 // define gear ratios and stuff
-#define PRONG_GEAR_RATIO -4.8
+#define PRONG_GEAR_RATIO 4.8
 #define PRONG_PORT 10
 #define PRONG_SPEED 28
 
@@ -29,7 +29,8 @@ int wheels[4] = {1, 20, 2, 11};
  * to keep execution time for this mode under a few seconds.
  */
 void initialize() {
-	// 36:1 gear ratio (red gearbox)
+	// 36:1 gear ratio (red gearbox) and reverse
+	motor_set_reversed(PRONG_PORT, true);
 	motor_set_gearing(PRONG_PORT, E_MOTOR_GEARSET_36);
 	
 	// set prong units to degrees and brake mode to hold
@@ -60,7 +61,7 @@ void stop_all_motors() {
 }
 
 /**
-	this function hangs until the motor has spun to the correct position
+	* this function hangs until the motor has spun to the correct position
 	*/
 int spin_to(uint8_t port, double position, int32_t velocity, float gear_ratio) {
 	int time_taken = 0;
@@ -150,7 +151,7 @@ void autonomous() {
 			case returning:
 				if (return_time >= AUTON_SEEK_TIME) {
 					state = dropping;
-					stop_all_motors;
+					stop_all_motors();
 				}
 				else {
 					spin_all_wheels(AUTON_DRIVE_SPEED * -1);
