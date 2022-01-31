@@ -218,13 +218,13 @@ void opcontrol() {
 		
 		// da prongs
 		if (is_pressing(E_CONTROLLER_DIGITAL_R1) && (motor_get_position(PRONG_PORT) / PRONG_GEAR_RATIO> 0 || is_pressing(E_CONTROLLER_DIGITAL_A))) {
-			motor_move(PRONG_PORT, PRONG_SPEED);
+			motor_move(PRONG_PORT, PRONG_SPEED * -1);
 			if (is_pressing(E_CONTROLLER_DIGITAL_A)) {
 				motor_tare_position(PRONG_PORT);
 			}
 		}
 		else if (is_pressing(E_CONTROLLER_DIGITAL_R2) && (motor_get_position(PRONG_PORT) / PRONG_GEAR_RATIO < 88 || is_pressing(E_CONTROLLER_DIGITAL_A))) {
-			motor_move(PRONG_PORT, PRONG_SPEED * -1);
+			motor_move(PRONG_PORT, PRONG_SPEED);
 			if (is_pressing(E_CONTROLLER_DIGITAL_A)) {
 				motor_tare_position(PRONG_PORT);
 			}
