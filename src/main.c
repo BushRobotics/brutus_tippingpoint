@@ -119,9 +119,9 @@ void autonomous() {
 		return;
 	#endif
 	
-	enum State {seeking, lifting, returning, dropping}; // thank god for c
+	typedef enum {seeking = 0, lifting, returning, dropping} State; // thank god for c
 	
-	enum State state = seeking;
+	State state = seeking;
 	
 	int total_time = 0;
 	int return_time = 0;
