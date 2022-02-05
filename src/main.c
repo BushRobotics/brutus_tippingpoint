@@ -19,7 +19,7 @@ struct Joystick {
 };
 
 // order: [left, right, top, bottom]
-int wheels[4] = {1, 20, 2, 11};
+int wheels[4] = {1, 19, 2, 11};
 
 
 /**
@@ -231,13 +231,13 @@ void opcontrol() {
 		wheel_power[3] -= right_stick.x * RIGHT_SENSITIVITY;
 		
 		// da prongs
-		if (is_pressing(E_CONTROLLER_DIGITAL_R1) && (motor_get_position(PRONG_PORT) / PRONG_GEAR_RATIO> 0 || is_pressing(E_CONTROLLER_DIGITAL_A))) {
-			motor_move(PRONG_PORT, PRONG_SPEED * -1);
+		if (is_pressing(E_CONTROLLER_DIGITAL_R1) && (motor_get_position(PRONG_PORT) / PRONG_GEAR_RATIO > 0 || is_pressing(E_CONTROLLER_DIGITAL_A))) {
+			motor_move(PRONG_PORT, -PRONG_SPEED);
 			if (is_pressing(E_CONTROLLER_DIGITAL_A)) {
 				motor_tare_position(PRONG_PORT);
 			}
 		}
-		else if (is_pressing(E_CONTROLLER_DIGITAL_R2) && (motor_get_position(PRONG_PORT) / PRONG_GEAR_RATIO < 88 || is_pressing(E_CONTROLLER_DIGITAL_A))) {
+		else if (is_pressing(E_CONTROLLER_DIGITAL_R2) && (motor_get_position(PRONG_PORT) / PRONG_GEAR_RATIO < 65 || is_pressing(E_CONTROLLER_DIGITAL_A))) {
 			motor_move(PRONG_PORT, PRONG_SPEED);
 			if (is_pressing(E_CONTROLLER_DIGITAL_A)) {
 				motor_tare_position(PRONG_PORT);
