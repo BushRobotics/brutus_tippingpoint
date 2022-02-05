@@ -1,6 +1,6 @@
 #include "main.h"
 
-#define DO_AUTON // comment this out for non-auton mode
+#define DO_AUTON 1 // this is automatically commented by comp_upload.sh when uploading for a competition
 
 // define gear ratios and stuff
 #define PRONG_GEAR_RATIO 4.8
@@ -62,17 +62,24 @@ void stop_all_motors() {
 
 /**
 	* this function hangs until the motor has spun to the correct position
+	@param port the port to spin
+	@param position the postition to rotate the port to - needs a direction
+	@param gear_ratio the gear ratio of the the motor. do 1 if there's no gear
 	*/
-int spin_to(uint8_t port, double position, int32_t velocity, float gear_ratio) {
+int spin_to(uint8_t port, double position, int32_t velocity, double gear_ratio) {
 	int time_taken = 0;
-	position = position * gear_ratio;
-	motor_move_absolute(port, position, velocity);
-	while (!(motor_get_position(port) < position + 10 * gear_ratio && motor_get_position(port) > position - 10 * gear_ratio)) {
+	position *= gear_ratio;
+	while (!(motor_get_position(port) < position + 5 && motor_get_position(port) > position - 5)) {
+		motor_move(port, velocity);
 		delay(2); // delay until within 10 units of position
 		time_taken += 2;
-		printf("moving motor %d to position %9.1f. current thingy is at %9.1f\r\n", port, position, motor_get_position(port));
+
+		if (time_taken % 256 == 0) {
+			printf("moving motor %d to position %lf. current thingy is at %lf\r\n", port, position / gear_ratio, motor_get_position(port) / gear_ratio);
+		}
 	}
 	motor_move(port, 0);
+	printf("\r\n\r\n\tMove done!\r\n\r\n");
 	return time_taken;
 }
 
@@ -127,7 +134,7 @@ void autonomous() {
 	int total_time = 0;
 	int return_time = 0;
 	
-	motor_move_absolute(PRONG_PORT, 88 * PRONG_GEAR_RATIO, 22); // start prong movement
+	motor_move_absolute(PRONG_PORT, 55.0 * PRONG_GEAR_RATIO, 22); // start prong movement
 	
 	controller_clear_line(E_CONTROLLER_MASTER, 0);
 	controller_print(E_CONTROLLER_MASTER, 0, 0, "We are autonomizing!!!!");
@@ -145,7 +152,7 @@ void autonomous() {
 			
 			case lifting:
 				stop_all_motors();
-				total_time += spin_to(PRONG_PORT, 50, 25, PRONG_GEAR_RATIO);
+				total_time += spin_to(PRONG_PORT, 28.0, -22, PRONG_GEAR_RATIO); // speed needs to be backwards so that it goes up
 				state = returning;
 				break;
 				
@@ -161,7 +168,7 @@ void autonomous() {
 				break;
 				
 			case dropping:
-				spin_to(PRONG_PORT, 85, 25, PRONG_GEAR_RATIO);
+				spin_to(PRONG_PORT, 55.0, 22, PRONG_GEAR_RATIO);
 				goto auton_done;
 				break;
 			
@@ -175,6 +182,7 @@ void autonomous() {
 	}
 	auton_done: ;
 	stop_all_motors();
+	printf("\r\n\r\n\tAuton done!\r\n\r\n");
 }
 
 /**
@@ -247,7 +255,7 @@ void opcontrol() {
 		// prints and stuff
 		if (frames == 250) {
 			frames = 0;
-			printf("prong position: %9.1f\r\n", motor_get_position(PRONG_PORT) / PRONG_GEAR_RATIO);
+			printf("prong position: %lf\r\n", motor_get_position(PRONG_PORT) / PRONG_GEAR_RATIO);
 			printf("in %d units\r\n", motor_get_encoder_units(PRONG_PORT)); // should be 0
 		}
 		
