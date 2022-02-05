@@ -67,9 +67,10 @@ int spin_to(uint8_t port, double position, int32_t velocity, float gear_ratio) {
 	int time_taken = 0;
 	position = position * gear_ratio;
 	motor_move_absolute(port, position, velocity);
-	while (!(motor_get_position(port) / gear_ratio < position + 5 && motor_get_position(port) / gear_ratio > position - 5)) {
-		delay(2); // delay until within 5 units of position
+	while (!(motor_get_position(port) < position + 10 * gear_ratio && motor_get_position(port) > position - 10 * gear_ratio)) {
+		delay(2); // delay until within 10 units of position
 		time_taken += 2;
+		printf("moving motor %d to position %9.1f. current thingy is at %9.1f\r\n", port, position, motor_get_position(port));
 	}
 	motor_move(port, 0);
 	return time_taken;
@@ -162,6 +163,11 @@ void autonomous() {
 			case dropping:
 				spin_to(PRONG_PORT, 85, 25, PRONG_GEAR_RATIO);
 				goto auton_done;
+				break;
+			
+			default:
+				printf("why is this here?");
+				break;
 		}
 		
 		total_time += 2;
