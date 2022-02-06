@@ -1,4 +1,5 @@
 #include "main.h"
+#include "replay.h"
 
 #define DO_AUTON 1 // this is automatically commented by comp_upload.sh when uploading for a competition
 
