@@ -2,6 +2,7 @@
 #include "replay.h"
 
 #define DO_AUTON 1 // this is automatically commented by comp_upload.sh when uploading for a competition
+//#define REC_AUTON 1 // this is automatically enabled by comp_upload.sh when uploading for a competition
 
 // define gear ratios and stuff
 #define PRONG_GEAR_RATIO 4.8
@@ -20,7 +21,7 @@ struct Joystick {
 };
 
 // order: [left, right, top, bottom]
-int wheels[4] = {1, 19, 2, 11};
+uint8_t wheels[4] = {1, 19, 2, 11};
 
 
 /**
@@ -94,6 +95,26 @@ int is_pressing(int button) {
 	return controller_get_digital(E_CONTROLLER_MASTER, button);
 }
 
+void play_recording(ReplayStep* replay) {
+	for (int i = 0; replay[i-1].last != 1; i++) {
+		for (int ii = 0; ii < 4; ii++) {
+			if (replay[i].wheels[ii] == replay[i - 1].wheels[ii]) {
+				continue;
+			}
+			motor_move_velocity(wheels[ii], replay[i].wheels[ii]);
+		}
+		if (replay[i].prong != replay[i - 1].prong) {
+			motor_move_velocity(PRONG_PORT, replay[i].prong);
+		}
+		delay(2);
+	}
+}
+
+void play_auton_recording() {
+	ReplayStep* replay = read_replay("/usd/rec");
+	play_recording(replay);
+}
+
 /**
  * Runs while the robot is in the disabled state of Field Management System or
  * the VEX Competition Switch, following either autonomous or opcontrol. When
@@ -125,6 +146,11 @@ void competition_initialize() {}
  */
 void autonomous() {
 	#ifndef DO_AUTON
+		return;
+	#endif
+	
+	#ifdef REC_AUTON
+		play_auton_recording();
 		return;
 	#endif
 	
@@ -210,6 +236,11 @@ void opcontrol() {
 	controller_clear_line(E_CONTROLLER_MASTER, 0);
 	controller_print(E_CONTROLLER_MASTER, 0, 0, "vroom vroom!");
 	
+	bool record_armed = false;
+	bool recording = false;
+	ReplayStep replay[15 * 1000 - 1];
+	int replay_step = 0;
+	
 	while (true) {
 		left_stick.x = controller_get_analog(E_CONTROLLER_MASTER, E_CONTROLLER_ANALOG_LEFT_X);
 		left_stick.y = controller_get_analog(E_CONTROLLER_MASTER, E_CONTROLLER_ANALOG_LEFT_Y);
@@ -258,6 +289,49 @@ void opcontrol() {
 			frames = 0;
 			printf("prong position: %lf\r\n", motor_get_position(PRONG_PORT) / PRONG_GEAR_RATIO);
 			printf("in %d units\r\n", motor_get_encoder_units(PRONG_PORT)); // should be 0
+		}
+		
+		if (record_armed && !recording) {
+			bool wheel_moving = false;
+			for (int i = 0; i < 4; i++) {
+				if (motor_get_actual_velocity(wheels[i]) > 0) {
+					wheel_moving = true;
+					break;
+				}
+			}
+			if (motor_get_actual_velocity(PRONG_PORT) > 0 || wheel_moving) {
+				recording = true;
+				printf("Began recording!\r\n");
+			}
+		}
+		
+		if (recording) {
+			for (int i = 0; i < 4; i++) {
+				replay[replay_step].wheels[i] = motor_get_actual_velocity(wheels[i]);
+			}
+			replay[replay_step].prong = motor_get_actual_velocity(PRONG_PORT);
+			replay_step++;
+			if (replay_step == 15 * 1000 + 1) {
+				replay[replay_step].last = 1; // indicate end of recording
+				
+				srand(frames);
+				int randomid = rand() % 100;
+				char filename[12];
+				sprintf(filename, "/usd/%d.rec", randomid);
+				
+				write_replay(replay, filename);
+				
+				printf("Recording written to %s\r\n", filename);
+				
+				replay_step = 0;
+				recording = false;
+				record_armed = false;
+			}
+		}
+		
+		if (is_pressing(E_CONTROLLER_DIGITAL_X)) {
+			record_armed = !record_armed;
+			printf("Record toggle\r\n");
 		}
 		
 		delay(2);
