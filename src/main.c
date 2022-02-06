@@ -59,7 +59,7 @@ void stop_all_motors() {
 	for (int i = 0; i < 4; i++) {
 		motor_move(wheels[i], 0);
 	}
-	motor_move(PRONG_PORT, 0);
+	motor_move_velocity(PRONG_PORT, 0);
 }
 
 /**
@@ -80,7 +80,7 @@ int spin_to(uint8_t port, double position, int32_t velocity, double gear_ratio) 
 			printf("moving motor %d to position %lf. current thingy is at %lf\r\n", port, position / gear_ratio, motor_get_position(port) / gear_ratio);
 		}
 	}
-	motor_move(port, 0);
+	motor_move_velocity(port, 0);
 	printf("\r\n\r\n\tMove done!\r\n\r\n");
 	return time_taken;
 }
@@ -276,7 +276,7 @@ void opcontrol() {
 			}
 		}
 		else {
-			motor_move(PRONG_PORT, 0);
+			motor_move_velocity(PRONG_PORT, 0);
 		}
 		
 		// actually spin motors
@@ -329,7 +329,7 @@ void opcontrol() {
 			}
 		}
 		
-		if (is_pressing(E_CONTROLLER_DIGITAL_X)) {
+		if (controller_get_digital_new_press(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_X)) {
 			record_armed = !record_armed;
 			printf("Record toggle\r\n");
 		}
