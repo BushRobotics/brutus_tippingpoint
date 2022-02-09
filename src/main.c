@@ -7,7 +7,7 @@
 // define gear ratios and stuff
 #define PRONG_GEAR_RATIO 4.8
 #define PRONG_PORT 10
-#define PRONG_SPEED 28
+#define PRONG_SPEED 22
 
 #define AUTON_DRIVE_SPEED 55
 #define AUTON_SEEK_TIME 2160
@@ -72,7 +72,7 @@ int spin_to(uint8_t port, double position, int32_t velocity, double gear_ratio) 
 	int time_taken = 0;
 	position *= gear_ratio;
 	while (!(motor_get_position(port) < position + 5 && motor_get_position(port) > position - 5)) {
-		motor_move(port, velocity);
+		motor_move_velocity(port, velocity);
 		delay(2); // delay until within 10 units of position
 		time_taken += 2;
 
@@ -264,13 +264,13 @@ void opcontrol() {
 		
 		// da prongs
 		if (is_pressing(E_CONTROLLER_DIGITAL_R1) && (motor_get_position(PRONG_PORT) / PRONG_GEAR_RATIO > 0 || is_pressing(E_CONTROLLER_DIGITAL_A))) {
-			motor_move(PRONG_PORT, -PRONG_SPEED);
+			motor_move_velocity(PRONG_PORT, -PRONG_SPEED);
 			if (is_pressing(E_CONTROLLER_DIGITAL_A)) {
 				motor_tare_position(PRONG_PORT);
 			}
 		}
-		else if (is_pressing(E_CONTROLLER_DIGITAL_R2) && (motor_get_position(PRONG_PORT) / PRONG_GEAR_RATIO < 65 || is_pressing(E_CONTROLLER_DIGITAL_A))) {
-			motor_move(PRONG_PORT, PRONG_SPEED);
+		else if (is_pressing(E_CONTROLLER_DIGITAL_R2) && (motor_get_position(PRONG_PORT) / PRONG_GEAR_RATIO < 70 || is_pressing(E_CONTROLLER_DIGITAL_A))) {
+			motor_move_velocity(PRONG_PORT, PRONG_SPEED);
 			if (is_pressing(E_CONTROLLER_DIGITAL_A)) {
 				motor_tare_position(PRONG_PORT);
 			}
@@ -291,6 +291,8 @@ void opcontrol() {
 			printf("in %d units\r\n", motor_get_encoder_units(PRONG_PORT)); // should be 0
 		}
 		
+
+		// arm recording
 		if (record_armed && !recording) {
 			bool wheel_moving = false;
 			for (int i = 0; i < 4; i++) {
