@@ -14,6 +14,8 @@
 
 #define RIGHT_SENSITIVITY 0.65
 
+#define REC_LENGTH 60 * 500
+
 // for controller axis
 struct Joystick {
 	int x;
@@ -238,7 +240,7 @@ void opcontrol() {
 	
 	bool record_armed = false;
 	bool recording = false;
-	ReplayStep replay[15 * 1000 - 1];
+	ReplayStep replay[REC_LENGTH - 1];
 	int replay_step = 0;
 	
 	while (true) {
@@ -313,7 +315,7 @@ void opcontrol() {
 			}
 			replay[replay_step].prong = motor_get_actual_velocity(PRONG_PORT);
 			replay_step++;
-			if (replay_step == 15 * 1000 + 1) {
+			if (replay_step == REC_LENGTH + 1) {
 				replay[replay_step].last = 1; // indicate end of recording
 				
 				srand(frames);
@@ -323,7 +325,7 @@ void opcontrol() {
 				
 				write_replay(replay, filename);
 				
-				printf("Recording written to %s\r\n", filename);
+				printf("\r\n\r\n\tRecording written to %s\r\n\r\n", filename);
 				
 				replay_step = 0;
 				recording = false;
