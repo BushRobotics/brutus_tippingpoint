@@ -315,7 +315,7 @@ void opcontrol() {
 			}
 			replay[replay_step].prong = motor_get_actual_velocity(PRONG_PORT);
 			replay_step++;
-			if (replay_step == REC_LENGTH + 1) {
+			if (replay_step == REC_LENGTH + 1 || is_pressing(E_CONTROLLER_DIGITAL_LEFT)) {
 				replay[replay_step].last = 1; // indicate end of recording
 				
 				srand(frames);
@@ -336,6 +336,10 @@ void opcontrol() {
 		if (controller_get_digital_new_press(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_X)) {
 			record_armed = !record_armed;
 			printf("Record toggle\r\n");
+		}
+		
+		if (is_pressing(E_CONTROLLER_DIGITAL_LEFT) && is_pressing(E_CONTROLLER_DIGITAL_A)) {
+			play_auton_recording();
 		}
 		
 		delay(2);

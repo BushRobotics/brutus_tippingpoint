@@ -25,7 +25,6 @@ ReplayStep *read_replay(char* filename) {
 	ReplayStep currentstep;
 	int i = 0;
 	while (fread(&currentstep, sizeof(ReplayStep), 1, f)) {
-		printf("%lf\r\n", currentstep.prong);
 		replay[i].prong = currentstep.prong;
 		replay[i].last = 1;
 		if (i > 0) {
