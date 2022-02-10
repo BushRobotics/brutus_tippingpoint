@@ -14,7 +14,7 @@
 
 #define RIGHT_SENSITIVITY 0.65
 
-#define REC_LENGTH 60 * 500
+#define REC_LENGTH 30000
 
 // for controller axis
 struct Joystick {
@@ -163,7 +163,7 @@ void autonomous() {
 	int total_time = 0;
 	int return_time = 0;
 	
-	motor_move_absolute(PRONG_PORT, 55.0 * PRONG_GEAR_RATIO, 22); // start prong movement
+	motor_move_absolute(PRONG_PORT, 68.0 * PRONG_GEAR_RATIO, 22); // start prong movement
 	
 	controller_clear_line(E_CONTROLLER_MASTER, 0);
 	controller_print(E_CONTROLLER_MASTER, 0, 0, "We are autonomizing!!!!");
@@ -197,7 +197,7 @@ void autonomous() {
 				break;
 				
 			case dropping:
-				spin_to(PRONG_PORT, 55.0, 22, PRONG_GEAR_RATIO);
+				spin_to(PRONG_PORT, 68.0, 22, PRONG_GEAR_RATIO);
 				goto auton_done;
 				break;
 			
@@ -235,13 +235,18 @@ void opcontrol() {
 	int wheel_power[4] = {0, 0, 0, 0};
 	int frames = 0;
 	
+	printf("stuff");
+	
 	controller_clear_line(E_CONTROLLER_MASTER, 0);
 	controller_print(E_CONTROLLER_MASTER, 0, 0, "vroom vroom!");
 	
 	bool record_armed = false;
 	bool recording = false;
-	ReplayStep replay[REC_LENGTH - 1];
+	ReplayStep* replay = malloc(sizeof(ReplayStep) * REC_LENGTH);
 	int replay_step = 0;
+
+	printf("Got to thing");
+	
 	
 	while (true) {
 		left_stick.x = controller_get_analog(E_CONTROLLER_MASTER, E_CONTROLLER_ANALOG_LEFT_X);
@@ -293,7 +298,7 @@ void opcontrol() {
 			printf("in %d units\r\n", motor_get_encoder_units(PRONG_PORT)); // should be 0
 		}
 		
-
+		
 		// arm recording
 		if (record_armed && !recording) {
 			bool wheel_moving = false;
@@ -314,7 +319,7 @@ void opcontrol() {
 				replay[replay_step].wheels[i] = motor_get_actual_velocity(wheels[i]);
 			}
 			replay[replay_step].prong = motor_get_actual_velocity(PRONG_PORT);
-			replay_step++;
+			
 			if (replay_step == REC_LENGTH + 1 || is_pressing(E_CONTROLLER_DIGITAL_LEFT)) {
 				replay[replay_step].last = 1; // indicate end of recording
 				
@@ -331,12 +336,14 @@ void opcontrol() {
 				recording = false;
 				record_armed = false;
 			}
+			replay_step++;
 		}
 		
 		if (controller_get_digital_new_press(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_X)) {
 			record_armed = !record_armed;
 			printf("Record toggle\r\n");
 		}
+		
 		
 		if (is_pressing(E_CONTROLLER_DIGITAL_LEFT) && is_pressing(E_CONTROLLER_DIGITAL_A)) {
 			play_auton_recording();
