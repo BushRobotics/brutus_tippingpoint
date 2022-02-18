@@ -17,10 +17,10 @@
 #define REC_LENGTH 30000
 
 // for controller axis
-struct Joystick {
+typedef struct {
 	int x;
 	int y;
-};
+} Joystick;
 
 // order: [left, right, top, bottom]
 uint8_t wheels[4] = {1, 19, 2, 11};
@@ -98,7 +98,7 @@ int is_pressing(int button) {
 }
 
 void play_recording(ReplayStep* replay) {
-	for (int i = 0; replay[i-1].last != 1; i++) {
+	for (int i = 0; replay[i].last != 1; i++) {
 		for (int ii = 0; ii < 4; ii++) {
 			if (replay[i].wheels[ii] == replay[i - 1].wheels[ii]) {
 				continue;
@@ -110,6 +110,7 @@ void play_recording(ReplayStep* replay) {
 		}
 		delay(2);
 	}
+	stop_all_motors();
 }
 
 void play_auton_recording() {
@@ -228,8 +229,8 @@ void autonomous() {
  * task, not resume it from where it left off.
  */
 void opcontrol() {
-	struct Joystick left_stick = {0, 0};
-	struct Joystick right_stick = {0, 0};
+	Joystick left_stick = {0, 0};
+	Joystick right_stick = {0, 0};
 	
 	
 	int wheel_power[4] = {0, 0, 0, 0};
